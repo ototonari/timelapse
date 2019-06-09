@@ -1,6 +1,7 @@
-import React, { FC, useState, useEffect, Component, RefObject } from 'react';
+import React, { Component, RefObject } from 'react';
+import { ee } from "../lib/Events";
 
-interface ImageProps {
+export interface ImageProps {
   src: string,
   alt: string
 }
@@ -9,7 +10,8 @@ interface CanvasProps {
   width: number,
   height: number,
   images: ImageProps[],
-  preloadedCallback: () => {}
+  preloadedCallback: () => void,
+  timelapseHandle: boolean | null
 }
 
 interface CanvasStatus {
@@ -22,6 +24,11 @@ enum LoadStatus {
   Loaded = 1
 }
 
+enum EventEmittStatus {
+  ALLREADYLOAD = "ALL_READY_LOAD",
+  START = "TIMELAPSE_START",
+  STOP = "TIMELAPSE_STOP"
+}
 
 class Canvas extends Component<CanvasProps, CanvasStatus> {
   images: HTMLImageElement[] | null = null
@@ -30,22 +37,34 @@ class Canvas extends Component<CanvasProps, CanvasStatus> {
   constructor(props: CanvasProps) {
     super(props)
     this.state = {
+      // 画像の読み込み状態を格納した配列
       loadStatusList: this.props.images.map(() => LoadStatus.Loading),
+      // 描画する画像のインデックス
       renderingIndex: 0
     }
+    // イメージのローディングが終わったら発火する
+    ee.once(EventEmittStatus.ALLREADYLOAD, this.props.preloadedCallback)
+    // タイムラプス始まる
+    ee.on(EventEmittStatus.START, this.enableTimelapse)
+    // タイムラプス終わる
+    ee.on(EventEmittStatus.STOP, this.disableTimelapse)
   }
 
   componentDidMount() {
+    // 画像のプリロードを始める
     const { images } = this.props
     const srcs = images.map((image: any) => image.src)
     this.images = this.imagePreLoader(srcs, (i: number) => {
+      // 読み込みが終われば、ステートの読み込み状態を変更する
       this.setState(prevState => {
         const newLoadStatusList = prevState.loadStatusList.concat()
         newLoadStatusList[i] = LoadStatus.Loaded
 
-        // callback
+        // イメージのローディングが終わったことを知らせるイベント
         const allReadyLoad = newLoadStatusList.every((loadStatus) => (loadStatus === LoadStatus.Loaded))
-        if (allReadyLoad) this.props.preloadedCallback()
+        if (allReadyLoad) {
+          ee.emit(EventEmittStatus.ALLREADYLOAD, this.props.preloadedCallback)
+        }
 
         return {
           loadStatusList: newLoadStatusList
@@ -54,9 +73,29 @@ class Canvas extends Component<CanvasProps, CanvasStatus> {
     })
   }
 
+  componentDidUpdate(prevProps: CanvasProps) {
+    // プロパティから再生、停止を受け取り、処理する
+    const { timelapseHandle } = this.props
+    if (timelapseHandle === prevProps.timelapseHandle) return
+    switch (timelapseHandle) {
+      case true:
+        ee.emit(EventEmittStatus.START)
+        console.log("start")
+        break
+      case false:
+        ee.emit(EventEmittStatus.STOP)
+        console.log("stop")
+        break
+      default:
+        break
+    }
+  }
+
+  // 画像のプリロードを担当する
   imagePreLoader = (srcs: string[], cb: any) => {
     const images = srcs.map((src, index) => {
       const img = new Image()
+      // 画像のプリロードを始める
       img.src = src
       img.onload = cb(index)
       return img
@@ -64,32 +103,27 @@ class Canvas extends Component<CanvasProps, CanvasStatus> {
     return images
   }
   
-  enableTimeout = () => {
+  // タイムラプスを始める
+  enableTimelapse = () => {
     this.intervalId = setInterval(() => {
+      const { renderingIndex } = this.state
+      this.drawCanvas(renderingIndex)
+  
       this.setState(prevState => ({
         renderingIndex: (prevState.renderingIndex < prevState.loadStatusList.length - 1) ? prevState.renderingIndex + 1 : 0
       }))
     }, 60)
   }
 
-  disableTimeout = () => {
+  // タイムラプスを停止する
+  disableTimelapse = () => {
     if (this.intervalId) clearInterval(this.intervalId)
   }
 
-  startHandler = () => {
-    const { loadStatusList } = this.state
-    const allReadyLoad = loadStatusList.every((loadStatus) => (loadStatus === LoadStatus.Loaded))
-    if (allReadyLoad) {
-      setInterval(() => {
-        this.setState(prevState => ({
-          renderingIndex: (prevState.renderingIndex < prevState.loadStatusList.length - 1) ? prevState.renderingIndex + 1 : 0
-        }))
-      }, 60)
-    }
-  }
-
+  // canvas に描画する
   drawCanvas = (index: number) => {
     if (this.images === null) return
+    // this.images から描画する image object を取り出す
     const img = this.images[index]
     if (img === null) return 
     const canvas = this.canvas.current
@@ -97,13 +131,13 @@ class Canvas extends Component<CanvasProps, CanvasStatus> {
     const ctx = canvas.getContext("2d")
     if (ctx === null) return
     const { width, height } = this.props
+    // canvas に描画する
     ctx.drawImage(img, 0, 0, width, height)
   }
 
   render() {
-    const { renderingIndex } = this.state
     const {  width, height } = this.props
-    this.drawCanvas(renderingIndex)
+
     return(
       <>
         <div>
