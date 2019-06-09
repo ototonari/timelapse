@@ -2,7 +2,10 @@
   "name": "react-timelapse",
   "version": "0.1.1",
   "private": false,
-  "main": "index.tsx",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "Tsubasa Nagata",
+  "license": "MIT",
   "dependencies": {
     "@types/events": "^3.0.0",
     "@types/jest": "24.0.13",
