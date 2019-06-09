@@ -14,7 +14,13 @@ const App: React.FC = () => {
   }
   return (
     <div className="App">
-      <Timelapse fps={60} timelapseHandle={timelapseHandle} preloadedCallback={startTimelapse} images={images} width={864} height={540} />
+      <Timelapse
+        fps={60} 
+        timelapseHandle={timelapseHandle} 
+        preloadedCallback={startTimelapse} 
+        images={images} 
+        width={864} 
+        height={540} />
     </div>
   );
 }
