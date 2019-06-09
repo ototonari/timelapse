@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
 
-import { TimelapseApp, sampleImageCreator } from "./container/Timelapse";
-import Canvas from "./component/Canvas";
+import Canvas from "timelapse/src/component/Timelapse";
+import { sampleImageCreator } from "./lib/Utils";
 
 const images = sampleImageCreator(100)
 

@@ -1,127 +1,150 @@
-import React, { FC, useState, useEffect, Component, RefObject } from 'react';
+import React, { Component, RefObject } from 'react';
+import { ee } from "timelapse/src/lib/Events";
 
-export interface Image {
+export interface ImageProps {
   src: string,
   alt: string
 }
 
 interface TimelapseProps {
-  images: Image[]
+  width: number,
+  height: number,
+  images: ImageProps[],
+  preloadedCallback: () => void,
+  timelapseHandle: boolean | null
 }
 
-interface TimelapseState {
-  showImageIndex: number,
-  enable: boolean,
+interface TimelapseStatus {
+  loadStatusList: LoadStatus[],
+  renderingIndex: number
 }
 
-export const TimelapseFC: FC<TimelapseProps> = (props: TimelapseProps) => {
-  const [hiddenIndex, setHiddenIndex] = useState(0)
-  const [enable, setEnable] = useState(false)
-  useEffect(() => {
-    const intervalId: NodeJS.Timeout = setInterval(() => {
-      if (enable === false) return
-
-      const { length } = props.images
-      if (hiddenIndex < length - 1) {
-        setHiddenIndex(hiddenIndex + 1)
-      }
-      else {
-        setHiddenIndex(0)
-      }
-    }, 50)
-
-    return () => clearInterval(intervalId)
-  })
-  const onClickHandler = () => setEnable(!enable)
-  const images = props.images.map((image, index) => <img id="slideImage" className={(index >= hiddenIndex) ? "visibleImage" : "hiddenImage"} key={index} {...image} /> ).reverse()
-  return (
-    <>
-      <div id="controllContainer" >
-        { hiddenIndex }
-        <button onClick={onClickHandler} type="button" >{(enable) ? "Stop" : "Start"}</button>
-      </div>
-      <div >
-        {(enable) ? images : null }
-      </div>
-    </>
-  )
+enum LoadStatus {
+  Loading = 0,
+  Loaded = 1
 }
 
-export class Timelapse extends Component<TimelapseProps> {
+enum EventEmittStatus {
+  ALLREADYLOAD = "ALL_READY_LOAD",
+  START = "TIMELAPSE_START",
+  STOP = "TIMELAPSE_STOP"
+}
+
+class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
+  images: HTMLImageElement[] | null = null
+  canvas: RefObject<HTMLCanvasElement> = React.createRef()
+  intervalId: NodeJS.Timeout | null = null
   constructor(props: TimelapseProps) {
     super(props)
-    const { images } = this.props
-    const img = new Image()
-    const drow = () => {
-      const node = this.canvasRef.current;
-      if (node) {
-        
-      }
+    this.state = {
+      // 画像の読み込み状態を格納した配列
+      loadStatusList: this.props.images.map(() => LoadStatus.Loading),
+      // 描画する画像のインデックス
+      renderingIndex: 0
     }
-    img.addEventListener("load", drow, false);
-    img.src = images[0].src
+    // イメージのローディングが終わったら発火する
+    ee.once(EventEmittStatus.ALLREADYLOAD, this.props.preloadedCallback)
+    // タイムラプス始まる
+    ee.on(EventEmittStatus.START, this.enableTimelapse)
+    // タイムラプス終わる
+    ee.on(EventEmittStatus.STOP, this.disableTimelapse)
   }
-  canvasRef: RefObject<HTMLCanvasElement> = React.createRef()
-  render () {
-    return (
-      <canvas ref={this.canvasRef} />
+
+  componentDidMount() {
+    // 画像のプリロードを始める
+    const { images } = this.props
+    const srcs = images.map((image: any) => image.src)
+    this.images = this.imagePreLoader(srcs, (i: number) => {
+      // 読み込みが終われば、ステートの読み込み状態を変更する
+      this.setState(prevState => {
+        const newLoadStatusList = prevState.loadStatusList.concat()
+        newLoadStatusList[i] = LoadStatus.Loaded
+
+        // イメージのローディングが終わったことを知らせるイベント
+        const allReadyLoad = newLoadStatusList.every((loadStatus) => (loadStatus === LoadStatus.Loaded))
+        if (allReadyLoad) {
+          ee.emit(EventEmittStatus.ALLREADYLOAD, this.props.preloadedCallback)
+        }
+
+        return {
+          loadStatusList: newLoadStatusList
+        }
+      })
+    })
+  }
+
+  componentDidUpdate(prevProps: TimelapseProps) {
+    // プロパティから再生、停止を受け取り、処理する
+    const { timelapseHandle } = this.props
+    if (timelapseHandle === prevProps.timelapseHandle) return
+    switch (timelapseHandle) {
+      case true:
+        ee.emit(EventEmittStatus.START)
+        console.log("start")
+        break
+      case false:
+        ee.emit(EventEmittStatus.STOP)
+        console.log("stop")
+        break
+      default:
+        break
+    }
+  }
+
+  // 画像のプリロードを担当する
+  imagePreLoader = (srcs: string[], cb: any) => {
+    const images = srcs.map((src, index) => {
+      const img = new Image()
+      // 画像のプリロードを始める
+      img.src = src
+      img.onload = cb(index)
+      return img
+    })
+    return images
+  }
+  
+  // タイムラプスを始める
+  enableTimelapse = () => {
+    this.intervalId = setInterval(() => {
+      const { renderingIndex } = this.state
+      this.drawCanvas(renderingIndex)
+  
+      this.setState(prevState => ({
+        renderingIndex: (prevState.renderingIndex < prevState.loadStatusList.length - 1) ? prevState.renderingIndex + 1 : 0
+      }))
+    }, 60)
+  }
+
+  // タイムラプスを停止する
+  disableTimelapse = () => {
+    if (this.intervalId) clearInterval(this.intervalId)
+  }
+
+  // canvas に描画する
+  drawCanvas = (index: number) => {
+    if (this.images === null) return
+    // this.images から描画する image object を取り出す
+    const img = this.images[index]
+    if (img === null) return 
+    const canvas = this.canvas.current
+    if (canvas === null) return 
+    const ctx = canvas.getContext("2d")
+    if (ctx === null) return
+    const { width, height } = this.props
+    // canvas に描画する
+    ctx.drawImage(img, 0, 0, width, height)
+  }
+
+  render() {
+    const {  width, height } = this.props
+
+    return(
+      <>
+        <div>
+          <canvas ref={this.canvas} width={width} height={height} />
+        </div>
+      </>
     )
   }
 }
-
-
-
-// export class Timelapse extends Component<TimelapseProps, TimelapseState> {
-//   constructor(props: TimelapseProps) {
-//     super(props)
-//     this.state = {
-//       showImageIndex: 0,
-//       enable: false,
-//     }
-//   }
-
-//   intervalId: NodeJS.Timeout | null = null
-
-//   rollIndex = () => {
-//     this.setState(prevState => {
-//       const newIndex = (prevState.showImageIndex < this.props.images.length - 1) ? prevState.showImageIndex + 1 : 0
-//       return { showImageIndex: newIndex }
-//     })
-//   }
-
-//   enableSwitch = ()  => {
-//     this.setState(prevState => ({ enable: !prevState.enable}))
-//   }
-//   componentDidMount = () => {
-//     this.intervalId = setInterval(() => {
-//       if (this.state.enable) this.rollIndex()
-//     }, 10)
-//   }
-
-//   componentWillUnmount = () => {
-//     if (this.intervalId) clearInterval(this.intervalId)
-//   }
-
-//   render () {
-//     const { showImageIndex, enable } = this.state
-//     // const imgComponents = this.props.images.map((images, index) => <li style={{ position: 'absolute', top: 0, visibility: (showImageIndex < index) ? 'hidden' : 'visible'}} key={index}><img style={{ width: 600, height: 600 }} {...images} /></li> ).sort()
-//     const changeStyle = (hiddenIndex: number) => {
-//       return this.props.images.map((images, index) => 
-//         <li style={{ visibility: (hiddenIndex >= index) ? 'visible' : 'hidden', position: 'absolute', top: 0, }} key={index}>
-//           <img style={{  }} {...images} />
-//         </li> ).sort()
-//     }
-//     const imageBox = () => (
-//       <ul style={{ position: 'absolute' }}>
-//         { changeStyle(showImageIndex) }
-//       </ul>
-//     )
-//     return (
-//       <div>
-//         <button type="button" onClick={this.enableSwitch} >Start</button>
-//         { (enable) ? imageBox() : null }
-//       </div>
-//     )
-//   }
-// }
-
+export default Timelapse
