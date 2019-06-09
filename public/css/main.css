@@ -1,0 +1,19 @@
+#slideImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.visibleImage {
+  visibility: visible
+}
+
+.hiddenImage {
+  visibility: hidden
+}
+
+#controllContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
