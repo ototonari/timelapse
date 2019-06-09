@@ -1,4 +1,7 @@
-import { ImageProps } from "../component/Timelapse";
+interface ImageProps {
+  src: string,
+  alt: string
+}
 
 export const sampleImageCreator = (maxIndex: number) => {
   const assetsPath = 'assets/sample/'

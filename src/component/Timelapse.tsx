@@ -1,7 +1,7 @@
 import React, { Component, RefObject } from 'react';
 import { ee } from "../lib/Events";
 
-export interface ImageProps {
+interface ImageProps {
   src: string,
   alt: string
 }
@@ -31,7 +31,7 @@ enum EventEmittStatus {
   STOP = "TIMELAPSE_STOP"
 }
 
-export class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
+class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
   images: HTMLImageElement[] | null = null
   canvas: RefObject<HTMLCanvasElement> = React.createRef()
   intervalId: NodeJS.Timeout | null = null
@@ -151,3 +151,5 @@ export class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
     )
   }
 }
+
+export default Timelapse

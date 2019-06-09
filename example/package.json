@@ -1,5 +1,5 @@
 {
-  "name": "timelapse",
+  "name": "sample-timelapse",
   "version": "0.1.0",
   "private": true,
   "main": "index.tsx",

@@ -1,4 +1,3 @@
-import React, { Component, RefObject } from 'react';
-import { Timelapse, ImageProps } from "./src/component/Timelapse";
+import Timelapse from "./src/component/Timelapse";
 
-export { Timelapse, ImageProps }
+export { Timelapse }
