@@ -71,7 +71,7 @@ const App: React.FC = () => {
         fps={60} // 描画する速さを指定
         timelapseHandle={timelapseHandle} // boolean を渡すことで再生、停止が行える（デフォルトはnull）
         preloadedCallback={startTimelapse} // 画像の読み込みが終わった時に呼ばれる関数
-        images={images} // 描画する画像ファイルを渡す
+        images={images} // 描画する画像オブジェクトを渡す
         width={864} // 描画ウィンドウの幅
         height={540} // 描画ウィンドウの高さ
       />
