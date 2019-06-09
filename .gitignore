@@ -25,4 +25,3 @@ yarn.lock
 build
 ._*
 .vscode
-dist

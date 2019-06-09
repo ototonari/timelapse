@@ -1,0 +1,39 @@
+{
+  "name": "react-timelapse",
+  "version": "0.1.2",
+  "private": false,
+  "description": "画像ファイルをタイムラプスで描画するコンポーネント",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "@types/events": "^3.0.0",
+    "@types/react": "16.8.19",
+    "@types/react-dom": "16.8.4",
+    "events": "^3.0.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "devDependencies": {
+    "typescript": "3.5.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ototonari/timelapse.git"
+  },
+  "keywords": [
+    "react",
+    "timelapse"
+  ],
+  "author": "Tsubasa Nagata",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ototonari/timelapse/issues"
+  },
+  "homepage": "https://github.com/ototonari/timelapse#readme"
+}

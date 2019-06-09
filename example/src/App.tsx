@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 import { sampleImageCreator } from "./lib/Utils";
 
-import Timelapse, { ImageProps } from "./component/Timelapse";
+// import Timelapse, { ImageProps } from "./component/Timelapse";
+import { Timelapse } from "react-timelapse"
 
 const images = sampleImageCreator(100)
 
