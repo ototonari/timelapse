@@ -1,7 +1,7 @@
 {
   "name": "timelapse",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "main": "index.tsx",
   "dependencies": {
     "@types/events": "^3.0.0",
@@ -39,7 +39,5 @@
     ]
   },
   "devDependencies": {
-    "@types/unsplash-js": "^5.0.0",
-    "unsplash-js": "^5.0.0"
   }
 }
