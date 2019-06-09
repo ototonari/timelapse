@@ -11,7 +11,8 @@ interface TimelapseProps {
   height: number,
   images: ImageProps[],
   preloadedCallback: () => void,
-  timelapseHandle: boolean | null
+  timelapseHandle: boolean | null,
+  fps: number
 }
 
 interface TimelapseStatus {
@@ -34,6 +35,7 @@ class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
   images: HTMLImageElement[] | null = null
   canvas: RefObject<HTMLCanvasElement> = React.createRef()
   intervalId: NodeJS.Timeout | null = null
+  fpsForMilisecond: number;
   constructor(props: TimelapseProps) {
     super(props)
     this.state = {
@@ -48,6 +50,8 @@ class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
     ee.on(EventEmittStatus.START, this.enableTimelapse)
     // タイムラプス終わる
     ee.on(EventEmittStatus.STOP, this.disableTimelapse)
+    // fps を ミリセカンドに変換する(1000/fps だと体感が一致しないため調整で4000)
+    this.fpsForMilisecond = 4000 / this.props.fps
   }
 
   componentDidMount() {
@@ -80,11 +84,11 @@ class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
     switch (timelapseHandle) {
       case true:
         ee.emit(EventEmittStatus.START)
-        console.log("start")
+        console.log("start timelapse")
         break
       case false:
         ee.emit(EventEmittStatus.STOP)
-        console.log("stop")
+        console.log("stop timelapse")
         break
       default:
         break
@@ -112,7 +116,7 @@ class Timelapse extends Component<TimelapseProps, TimelapseStatus> {
       this.setState(prevState => ({
         renderingIndex: (prevState.renderingIndex < prevState.loadStatusList.length - 1) ? prevState.renderingIndex + 1 : 0
       }))
-    }, 60)
+    }, this.fpsForMilisecond)
   }
 
   // タイムラプスを停止する
