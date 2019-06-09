@@ -1,5 +1,7 @@
 ## タイムラプス コンポーネント
 
+![サンプルイメージ](https://github.com/ototonari/timelapse/tree/master/example/public/assets/sample/sample.gif "サンプル")
+
 ### 機能
 - 画像をタイムラプスのように連続で表示させることができます。
 - あらかじめ読み込むのでスムーズに再生が可能です。
