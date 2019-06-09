@@ -1,7 +1,7 @@
 import React, { Component, RefObject } from 'react';
 import { ee } from "../lib/Events";
 
-interface ImageProps {
+export interface ImageProps {
   src: string,
   alt: string
 }
