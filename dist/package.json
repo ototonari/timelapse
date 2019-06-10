@@ -1,6 +1,6 @@
 {
   "name": "react-timelapse",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "private": false,
   "description": "画像ファイルをタイムラプスで描画するコンポーネント",
   "main": "index.js",
